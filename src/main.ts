@@ -1,6 +1,6 @@
 import express from 'express';
 import companyCheckUserRoutes from './routes/companyCheckuserRoutes';
-
+import userLoginRoutes from './routes/userLoginRoutes';
 import cors from 'cors';
 
 import { testConnection } from './utils/dbconfig';
@@ -31,7 +31,7 @@ app.get('/api', (req, res) => {
 });
 
 app.use('/api',companyCheckUserRoutes);
-
+app.use('/userlogin',userLoginRoutes);
 
 // Start the server
 const PORT = 3000;
