@@ -23,7 +23,7 @@ testConnection()
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Hello from Vite + Node.js + TypeScript!!!aaa');
+  res.send('Vite + Node.js + TypeScript!!!');
 });
 
 app.get('/api', (req, res) => {
