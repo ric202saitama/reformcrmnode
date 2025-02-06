@@ -54,7 +54,7 @@ export const updateUserPassword = async (
     ) => {
         const strSQL = `update usermaster
         set
-        user_pass = ?
+        user_pass = md5(?)
         where
         emailadd = ?
         `;
