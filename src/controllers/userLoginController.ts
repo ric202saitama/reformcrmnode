@@ -1,8 +1,107 @@
 import { Request, Response } from 'express';
-import {checkUserLogin, checkUserTokenLogin, checkEmailExist, updateUserPassword } from '../services/userLoginService';
-import { WEBTOKEN_SECRET_KEY,GOOGLE_EMAIL_USER,GOOGLE_APP_PASSOWRD,MAIL_PASSWORD_URL } from '../utils/secretKey';
+import { generatenineUniqueId } from "../utils/miscFunction";
+import {
+    checkUserLogin
+    ,checkUserTokenLogin
+    ,checkEmailExist
+    ,updateUserPassword
+    ,getUserList 
+    ,createUpdateUser
+} from '../services/userLoginService';
+import { WEBTOKEN_SECRET_KEY
+    ,GOOGLE_EMAIL_USER
+    ,GOOGLE_APP_PASSOWRD
+    ,MAIL_PASSWORD_URL 
+} from '../utils/secretKey';
+
 import jwt from 'jsonwebtoken';
 
+export const setSaveUser = async(req: Request, res : Response) =>{
+    try{
+        const payload = req.body;        
+
+        jwt.verify(payload.token, WEBTOKEN_SECRET_KEY, async (err: any, decoded: any) => {
+            if (typeof decoded === "string") {
+                throw new Error("Invalid token format.");            
+            }
+            if (err) {
+                res.status(200).json({ handlervalue:0, message:"Token has expired."});
+            } else {
+                    let user_id = "";
+                    let isnew = 0;
+                    if(payload.user_id==0){
+                        //create new user_id
+                        user_id = generatenineUniqueId();                        
+                        isnew = 1;
+                        //check if email already exist
+                        const isexist = await checkEmailExist(payload.emailadd);
+                        if(isexist[0]["isemailexist"]>0){
+                            res.status(200).json({ handlervalue:2, message:"Email already exist."});
+                            return;
+                        }
+                    } else {
+                        user_id = payload.user_id;                        
+                        if(payload.emailadd!=payload.oemailadd){
+                            //check if email already exist
+                            const isexist = await checkEmailExist(payload.emailadd);
+                            if(isexist[0]["isemailexist"]>0){
+                                res.status(200).json({ handlervalue:2, message:"Email already exist."});
+                                return;
+                            }
+                        }
+                    }
+
+                    const issave = await createUpdateUser(
+                        decoded.comp_id
+                        ,user_id
+                        ,payload.user_name
+                        ,payload.user_pass
+                        ,payload.contactno
+                        ,payload.emailadd
+                        ,payload.isadmin
+                        ,payload.isactive
+                        ,decoded.user_id
+                        ,isnew
+                    );
+                    
+                    if(issave==1){
+                        res.status(200).json({ handlervalue:1, message:"User Created Successfully.",user_id:user_id});
+                    } else {
+                        res.status(200).json({ handlervalue:3, message:"User not created, an error occured. Please contact backend."});
+                    }                                    
+            }
+        });
+    } catch(error){
+        if(error instanceof Error){
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(400).json({ message: "Unknown error occured." });
+        }        
+    }
+}
+
+export const getUserComp = async(req: Request, res : Response) =>{
+    try{
+        const payload = req.body;
+        jwt.verify(payload.token, WEBTOKEN_SECRET_KEY, async (err: any, decoded: any) => {
+            if (typeof decoded === "string") {
+                throw new Error("Invalid token format.");            
+            }
+            if (err) {
+                res.status(200).json({ handlervalue:0, message:"Token has expired."});
+            } else {                
+                const userList = await getUserList(decoded.comp_id,payload.searchkey,payload.isactive);
+                res.status(200).json({ handlervalue:1, message:"",userList: userList});
+            }
+        });
+    } catch(error){
+        if(error instanceof Error){
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(400).json({ message: "Unknown error occured." });
+        }        
+    }
+}
 
 export const validateUser = async (req : Request, res : Response) =>{
     try{
@@ -15,11 +114,12 @@ export const validateUser = async (req : Request, res : Response) =>{
             const token = jwt.sign({
                         user_id : checkusercredential[0]["user_id"]
                         ,emailadd: checkusercredential[0]["emailadd"]
+                        ,comp_id: checkusercredential[0]["comp_id"]
                     }
                     ,WEBTOKEN_SECRET_KEY
                     ,{expiresIn: '1d'}
             );
-            res.status(200).json({ handlervalue: 1, token });
+            res.status(200).json({ handlervalue: 1, token,user_name:  checkusercredential[0]["user_name"],comp_id: checkusercredential[0]["comp_id"]});
         }
 
     }catch(error){
@@ -34,7 +134,7 @@ export const validateUser = async (req : Request, res : Response) =>{
 
 export const validateChangePasswordToken = async (req: Request, res: Response) =>{
     try{
-        const payload = req.body;
+        const payload = req.body;        
         jwt.verify(payload.token, WEBTOKEN_SECRET_KEY, async (err: any, decoded: any) => {
             if (typeof decoded === "string") {
                 throw new Error("Invalid token format.");            
@@ -77,11 +177,12 @@ export const validateToken = async(req: Request, res: Response) =>{
             const token = jwt.sign({
                 user_id : credential["user_id"]
                 ,emailadd: credential["emailadd"]
+                ,comp_id: credential["comp_id"]
             }
             ,WEBTOKEN_SECRET_KEY
             ,{expiresIn: '1d'}
             );
-            res.status(200).json({ handlervalue: 1, token });                        
+            res.status(200).json({ handlervalue: 1, token, user_name: credential["user_name"], comp_id: credential["comp_id"] });                        
         }
         
     } catch(error){
@@ -110,7 +211,7 @@ export const resetPasswordMail = async(req: Request, res: Response) =>{
             ,WEBTOKEN_SECRET_KEY
             ,{expiresIn: '15m'}
             );            
-            const securityurl = MAIL_PASSWORD_URL+"/token="+token;
+            const securityurl = MAIL_PASSWORD_URL+"/"+token;
 
             //mail exist proceed to mail function
             const nodemailer = require('nodemailer');

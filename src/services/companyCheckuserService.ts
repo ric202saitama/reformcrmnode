@@ -1,5 +1,5 @@
 import mysqldbpool from "../utils/dbconfig";
-import { generatenineUniqueId } from "../utils/miscFunction"
+import { generatenineUniqueId } from "../utils/miscFunction";
 
 
 export const createCompanynUserDefault = async(    
@@ -35,7 +35,7 @@ export const createCompanynUserDefault = async(
         
         //insert into usermaster 
         const user_id = generatenineUniqueId();
-        // console.log(user_id);
+        
         var strSQL =  `insert into usermaster
         set
         comp_id = ?
