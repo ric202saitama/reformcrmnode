@@ -1,0 +1,22 @@
+{
+  "name": "mecab-async",
+  "version": "0.1.2",
+  "author": {
+    "name": "hecomi",
+    "email": "info@hecomi.com"
+  },
+  "main": "mecab",
+  "dependencies": {
+    "shell-quote": "*"
+  },
+  "readmeFilename": "README.md",
+  "description": "Asynchronous japanese morphological analyzer using MeCab.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hecomi/node-mecab-async.git"
+  },
+  "bugs": {
+    "mail": "info@hecomi.com",
+    "url": "http://github.com/hecomi/node-mecab-async/issues"
+  }
+}

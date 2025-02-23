@@ -124,8 +124,7 @@ export const getaddressfromdb = async(
     // Add pagination    
     strSQL += ` LIMIT ? OFFSET ?`;
     values.push(pageSize, page * pageSize);   
-    /* console.log(strSQL);
-    console.log(values); */
+
     const [rows] = await mysqldbpool.query(strSQL, values);
     return {rows: rows, rowsCount: rowsCount} as any;
 }
